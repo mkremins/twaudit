@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Twaudit</title>
+  <link href='https://fonts.googleapis.com/css?family=Roboto:400,400italic,700,700italic' rel='stylesheet' type='text/css'>
+  <style>
+  body {
+    font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.6em;
+  }
+  a {
+    text-decoration: none;
+  }
+  table {
+    border-collapse: collapse;
+  }
+  th {
+    text-align: left;
+  }
+  tr:nth-child(even) {
+    background: #eee;
+  }
+  td:not(:last-child) {
+    padding-right: 1em;
+  }
+  th:last-child { /* Mutual? column */
+    padding-left: 1em;
+    padding-right: 1em;
+  }
+  td:last-child { /* Mutual? column */
+    position: relative;
+    text-align: center;
+    top: 2px;
+  }
+  .profile-pic {
+    max-height: 2em;
+    vertical-align: middle;
+  }
+  </style>
+</head>
+<body>
+  <p>Hello, <a href="https://twitter.com/{{screen_name}}">@{{screen_name}}</a>! You're following <strong>{{friends|count}}</strong> people:</p>
+  <table>
+    <tr>
+      <tr>
+        <th><!-- empty header for profile images column --></th>
+        <th>Name</th>
+        <th>Screen name</th>
+        <th>Last active</th>
+        <th>Mutual?</th>
+      </tr>
+      {% for friend in friends %}
+      <tr>
+        <td><a href="{{friend.url}}"><img src="{{friend.profile_image_url_https}}" alt="" class="profile-pic"></a></td>
+        <td><a href="{{friend.url}}">{{friend.name}}</a></td>
+        <td><a href="{{friend.url}}">{{friend.screen_name}}</a></td>
+        <td>{{friend.last-active}}</td>
+        <td>{% if friend.mutual? %}✅{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tr>
+  </table>
+</body>
+</html>
