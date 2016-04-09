@@ -92,23 +92,6 @@
     (println (str "get-friends: loaded " (count friends) " friends!"))
     friends))
 
-(defonce loaded-friends
-  (atom {}))
-
-(defn load-friends! [creds screen-name]
-  (swap! loaded-friends assoc screen-name
-    (future (get-friends creds screen-name))))
-
-(defn maybe-load-friends! [creds screen-name]
-  (when (or (not (contains? @loaded-friends screen-name))
-            (let [pending (get @loaded-friends screen-name)]
-              (and (realized? pending) (nil? @pending))))
-    (load-friends! creds screen-name)))
-
-(defn get-loaded-friends [screen-name]
-  (when-let [pending (get @loaded-friends screen-name)]
-    (when (realized? pending) @pending)))
-
 ;;; logging
 
 (defn wrap-request-logging [handler]
@@ -119,11 +102,13 @@
 ;;; routes
 
 (defn main-route [{:keys [session] :as req}]
-  (if-let [{:keys [screen-name oauth-creds]} (:twitter session)]
-    (if-let [friends (get-loaded-friends screen-name)]
-      (selmer/render-file "index.html" {:screen_name screen-name :friends friends})
-      (do (maybe-load-friends! oauth-creds screen-name)
-          (str "Hello, @" screen-name "! We're still loading your friends – check back soon.")))
+  (if-let [{:keys [friends oauth-creds screen-name]} (:twitter session)]
+    (let [friends (or friends (get-friends oauth-creds screen-name))]
+      (-> (selmer/render-file "index.html"
+            {:screen_name screen-name :friends friends})
+          (response/response)
+          (response/content-type "text/html;charset=utf-8")
+          (assoc :session (assoc-in session [:twitter :friends] friends))))
     (str "You're not signed in to Twitter! <a href=\"/sign-in\">Click here to sign in.</a>")))
 
 (defroutes app-routes
