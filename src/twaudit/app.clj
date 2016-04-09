@@ -92,6 +92,17 @@
     (println (str "get-friends: loaded " (count friends) " friends!"))
     friends))
 
+(defn maybe-load-friends [twitter-data]
+  (let [{:keys [friends friends-timestamp oauth-creds screen-name]
+         :or   {friends-timestamp 0}} twitter-data
+        current-timestamp (System/currentTimeMillis)
+        friends-age (- current-timestamp friends-timestamp)]
+    (cond-> twitter-data
+      ;; if friends list is absent or stale (>15 mins old), retrieve new list
+      (or (nil? friends) (> friends-age (* 15 60 1000)))
+      (assoc :friends (get-friends oauth-creds screen-name)
+             :friends-timestamp current-timestamp))))
+
 ;;; logging
 
 (defn wrap-request-logging [handler]
@@ -102,13 +113,12 @@
 ;;; routes
 
 (defn main-route [{:keys [session] :as req}]
-  (if-let [{:keys [friends oauth-creds screen-name]} (:twitter session)]
-    (let [friends (or friends (get-friends oauth-creds screen-name))]
-      (-> (selmer/render-file "index.html"
-            {:screen_name screen-name :friends friends})
-          (response/response)
-          (response/content-type "text/html;charset=utf-8")
-          (assoc :session (assoc-in session [:twitter :friends] friends))))
+  (if-let [twitter-data (some-> session :twitter maybe-load-friends)]
+    (-> (selmer/render-file "index.html"
+          (select-keys twitter-data [:friends :screen-name]))
+        (response/response)
+        (response/content-type "text/html;charset=utf-8")
+        (assoc :session (assoc session :twitter twitter-data)))
     (str "You're not signed in to Twitter! <a href=\"/sign-in\">Click here to sign in.</a>")))
 
 (defroutes app-routes
