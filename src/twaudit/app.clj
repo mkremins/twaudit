@@ -133,11 +133,11 @@
 (defonce app
   (-> app-routes
       (twitter-oauth.middleware/wrap-twitter-oauth
-        {:consumer-key      (:consumer-key env)
-         :consumer-secret   (:consumer-secret env)
-         :request-token-uri "/sign-in"
-         :access-token-uri  "/oauth-callback"
-         :after-auth-uri    "/"})
+        {:consumer-key    (:consumer-key env)
+         :consumer-secret (:consumer-secret env)
+         :sign-in-uri     "/sign-in"
+         :callback-uri    "/oauth-callback"
+         :finished-uri    "/"})
       (handler/site)
       (session/wrap-session)
       (wrap-request-logging)))
