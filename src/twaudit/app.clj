@@ -1,5 +1,6 @@
 (ns twaudit.app
   (:require [clj-time.core :as time]
+            [clojure.edn :as edn]
             [clojure.set :as set]
             [clojure.string :as str]
             [compojure.core :refer [defroutes GET POST]]
@@ -12,10 +13,12 @@
 
 ;;; configuration
 
-(defonce env ; TODO System/getenv
-  (zipmap
-    [:consumer-key :consumer-secret]
-    (str/split-lines (slurp "./credentials.txt"))))
+(defonce env
+  (let [consumer-key    (System/getenv "CONSUMER_KEY")
+        consumer-secret (System/getenv "CONSUMER_SECRET")]
+    (if (and consumer-key consumer-secret)
+      {:consumer-key consumer-key :consumer-secret consumer-secret}
+      (edn/read-string (slurp "./credentials.edn")))))
 
 ;;; datetime parsing
 
