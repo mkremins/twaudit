@@ -6,19 +6,11 @@
             [compojure.core :refer [defroutes GET POST]]
             [compojure.handler :as handler]
             [twitter-oauth.middleware]
+            [ring.adapter.jetty :as jetty]
             [ring.middleware.session :as session]
             [ring.util.response :as response]
             [selmer.parser :as selmer]
             [twitter.api.restful :as twitter]))
-
-;;; configuration
-
-(defonce env
-  (let [consumer-key    (System/getenv "CONSUMER_KEY")
-        consumer-secret (System/getenv "CONSUMER_SECRET")]
-    (if (and consumer-key consumer-secret)
-      {:consumer-key consumer-key :consumer-secret consumer-secret}
-      (edn/read-string (slurp "./credentials.edn")))))
 
 ;;; datetime parsing
 
@@ -128,7 +120,16 @@
   (GET "/"             req (main-route req))
   (GET "/favicon.ico"  []  (response/not-found "404")))
 
-(defonce app
+;;; main app setup
+
+(defn load-env [fpath]
+  (let [consumer-key    (System/getenv "CONSUMER_KEY")
+        consumer-secret (System/getenv "CONSUMER_SECRET")]
+    (if (and consumer-key consumer-secret)
+      {:consumer-key consumer-key :consumer-secret consumer-secret}
+      (edn/read-string (slurp fpath)))))
+
+(defn make-app [env]
   (-> app-routes
       (twitter-oauth.middleware/wrap-twitter-oauth
         {:consumer-key    (:consumer-key env)
@@ -139,3 +140,9 @@
       (handler/site)
       (session/wrap-session)
       (wrap-request-logging)))
+
+(defn -main [port & args]
+  (let [port (Integer/parseInt port)
+        env  (load-env "./credentials.edn")]
+    (println (str "Starting server on port " port "..."))
+    (jetty/run-jetty (make-app env) {:port port})))
