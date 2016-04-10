@@ -1,6 +1,6 @@
 (defproject mkremins/twaudit "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.6.0"]
-                 [mkremins/twitter-oauth "0.0-SNAPSHOT"]
+                 [mkremins/twitter-oauth "0.1.0"]
                  [clj-time "0.11.0"]
                  [compojure "1.3.4"]
                  [selmer "0.8.2"]
