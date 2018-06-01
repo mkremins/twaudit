@@ -83,6 +83,7 @@
   (let [friends (try
                   (->> (get-friends-ids creds screen-name)
                        (partition-all 100)
+                       (take 15) ; limit to 15 batches (any more will hit friendships/lookup rate limit)
                        (map (partial str/join ","))
                        (mapcat (partial get-users creds))
                        (sort-by last-active)
