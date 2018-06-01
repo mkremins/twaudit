@@ -1,5 +1,6 @@
 (ns twaudit.app
-  (:require [clj-time.core :as time]
+  (:require [clj-time.coerce :as time-coerce]
+            [clj-time.core :as time]
             [clojure.edn :as edn]
             [clojure.set :as set]
             [clojure.string :as str]
@@ -43,6 +44,9 @@
 (defn follows-me? [user]
   (boolean (some #{"followed_by"} (:connections user))))
 
+(defn muted? [user]
+  (boolean (some #{"muting"} (:connections user))))
+
 (defn last-active [user]
   (-> user :status :created_at parse-datetime))
 
@@ -52,6 +56,8 @@
 (defn reshape-user [user]
   (assoc user
     :last-active (days-ago (last-active user))
+    :last-active-timestamp (time-coerce/to-long (last-active user))
+    :muted? (muted? user)
     :mutual? (follows-me? user)
     :url (profile-url user)))
 
